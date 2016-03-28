@@ -1,0 +1,35 @@
+---
+
+# use environment variables to set AWS EC2 creds
+
+- hosts: "{{ target|default('localhost') }}"
+  tasks:
+  - name: launch 3 instances
+    ec2:
+      key_name: ec2_mongo
+      region: us-east-1
+      vpc_subnet_id: subnet-bfc7afc9 
+      instance_type: t2.micro
+      image: ami-fce3c696 
+      wait: yes
+      group: mongo  
+      count: 3
+      assign_public_ip: yes
+
+  - name: gather facts 
+    ec2_remote_facts: 
+      region: us-east-1
+      filters:
+        instance-state-name: running
+    register: ec2_info
+  
+  - name: debug ec2 instances 
+    debug: msg="{{ item.id }} {{ item.public_dns_name }}"
+    with_items: "{{ ec2_info.instances }}"
+    when: debug is defined 
+
+  - name: write the inventory file
+    template: src="./inv.j2" dest="/Users/patg/code/pmtech-ansible/mongo_presentation/aws.inv"
+
+  - name: write delete runbook
+    template: src="./delete_instances.yml.j2" dest="/Users/patg/code/pmtech-ansible/mongo_presentation/delete_instances.yml"

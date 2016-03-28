@@ -1,0 +1,21 @@
+---
+
+- hosts: "{{ target|default('localhost') }}"
+  tasks:
+  - name: gather facts 
+    ec2_remote_facts: 
+      region: us-east-1
+      filters:
+        instance-state-name: running
+      
+    register: ec2_info
+  
+  - name: debug ec2
+    debug: msg="{{ item.id }} {{ item.public_dns_name }}"
+    with_items: "{{ ec2_info.instances }}"
+
+  - name: write the inventory file
+    template: src="./inv.j2" dest="/Users/patg/code/pmtech-ansible/mongo_presentation/aws.inv"
+
+  - name: write delete runbook
+    template: src="./delete_instances.yml.j2" dest="/Users/patg/code/pmtech-ansible/mongo_presentation/delete_instances.yml"
