@@ -1,4 +1,4 @@
-[aws]
+[{{ repset_name }}]
 {% for item in ec2_info.instances %}
-{{ item.public_dns_name }} ansible_host={{ lookup('ip', item.public_dns_name) }} ansible_ssh_private_key_file=~/.ssh/ec2_mongo.pem ansible_ssh_user=ubuntu
+{{ item.public_dns_name }} ansible_host={{ lookup('ip', item.public_dns_name) }} ansible_ssh_private_key_file={{ ssh_private_key }} ansible_ssh_user={{ ssh_user }}
 {% endfor %}

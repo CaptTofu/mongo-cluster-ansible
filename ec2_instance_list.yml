@@ -1,0 +1,14 @@
+---
+
+- hosts: "{{ target|default('localhost') }}"
+  tasks:
+  - name: gather facts 
+    ec2_remote_facts: 
+      region: us-east-1
+      filters:
+        instance-state-name: running
+    register: ec2_info
+  
+  - name: debug ec2_info output
+    debug: msg="{{ item.id }} {{ item.public_dns_name }}"
+    with_items: "{{ ec2_info.instances }}"

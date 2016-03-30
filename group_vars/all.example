@@ -1,0 +1,10 @@
+repset_name: mongo-rs1
+ssh_user: ubuntu
+ssh_private_key: ~/.ssh/ec2_mongo.pem
+image: ami-fce3c696 
+instance_type: t2.micro
+vpc_subnet_id: subnet-abcd1234
+region: us-east-1
+secgroup: mongogroup
+key_name: yourkey 
+use_private_host: true

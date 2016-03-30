@@ -7,15 +7,18 @@
       region: us-east-1
       filters:
         instance-state-name: running
-      
     register: ec2_info
   
-  - name: debug ec2
+  - name: debug ec2_info output
     debug: msg="{{ item.id }} {{ item.public_dns_name }}"
     with_items: "{{ ec2_info.instances }}"
+    when: debug is defined
 
   - name: write the inventory file
-    template: src="./inv.j2" dest="/Users/patg/code/pmtech-ansible/mongo_presentation/aws.inv"
+    template: src="./inv.j2" dest="{{ playbook_dir }}/{{ repset_name }}.inv"
 
   - name: write delete runbook
-    template: src="./delete_instances.yml.j2" dest="/Users/patg/code/pmtech-ansible/mongo_presentation/delete_instances.yml"
+    template: src="./delete_instances.yml.j2" dest="{{ playbook_dir }}/delete_instances.yml"
+
+  - name: write group vars for mongo repset group
+    template: src="./group_vars.j2" dest="{{ playbook_dir }}/group_vars/{{ repset_name }}"

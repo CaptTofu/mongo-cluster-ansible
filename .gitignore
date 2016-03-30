@@ -1,3 +1,7 @@
 delete_instances.yml
-aws.inv
 *.retry
+*.inv
+password.yml
+secret
+group_vars/all
+group_vars/local

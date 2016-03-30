@@ -1,0 +1,21 @@
+{% set name_key = 'public_dns_name' -%}
+{% if use_private_host is defined  -%}
+{% set name_key = 'private_dns_name' %}
+{% endif %}
+mongod_link_to: /mnt/data/mongodb
+mongod_datadir_prefix: /var/lib/mongodb
+mongod_replication: true
+mongod_repl_master: {{ ec2_info.instances[0].public_dns_name }} 
+mongod_replset_name: {{ repset_name }} 
+mongod_repl_servers: 
+{% for item in ec2_info.instances %}
+  "{{ item.public_dns_name }}": {{ item[name_key] }}
+{% endfor %}
+mongod_config_servers: 
+{% for item in ec2_info.instances %}
+  - {{ item[name_key] }}:27019
+{% endfor %}
+mongos_servers:
+{% for item in ec2_info.instances %}
+  "{{ item.public_dns_name}}": {{ item[name_key] }}
+{% endfor %}
