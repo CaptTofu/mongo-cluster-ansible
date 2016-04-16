@@ -4,34 +4,112 @@
 
 - hosts: "{{ target|default('localhost') }}"
   tasks:
-  - name: launch 3 instances
+  - name: "{{ key_name }} ec2 key in us-west-1"
+    ec2_key:
+      region: us-west-1
+      name: "{{ key_name }}" 
+      key_material: "{{ item }}"
+    with_file: ~/.ssh/ec2_mongo.pem.pub 
+  
+  - name: "{{ key_name }} ec2 key in us-west-2"
+    ec2_key:
+      region: us-west-2
+      name: "{{ key_name }}" 
+      key_material: "{{ item }}"
+    with_file: ~/.ssh/ec2_mongo.pem.pub 
+  
+  - name: "add {{ secgroup }} security group"
+    ec2_group:
+      name: "{{ secgroup }}"
+      description: "{{ secgroup }} security group in {{ item.key }}"
+      vpc_id: "{{ item.value.vpc }}" 
+      region: "{{ item.key }}" 
+      rules:
+        - proto: tcp
+          from_port: 80
+          to_port: 80
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 27017
+          to_port: 27017 
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 27018
+          to_port: 27018 
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 27019
+          to_port: 27019 
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 28017
+          to_port: 28017
+          cidr_ip: 0.0.0.0/0
+    with_dict: "{{ regions }}"
+  
+  - name: "launch {{ cluster_size }} instances"
     ec2:
       key_name: "{{ key_name }}" 
-      region: "{{ region }}" 
-      vpc_subnet_id: "{{ vpc_subnet_id }}"
+      region: "{{ item.key }}" 
+      vpc_subnet_id: "{{ item.value.vpc_subnet }}"
       instance_type: "{{ instance_type }}"
-      image: "{{ image }}" 
+      image: "{{ item.value.ami }}" 
       wait: yes
       group: "{{ secgroup }}" 
-      count: 3
+      count: "{{ cluster_size }}" 
       assign_public_ip: yes
+    with_dict: "{{ regions }}"
 
-  - name: gather facts 
+  - name: gather facts from us-west-1 
     ec2_remote_facts: 
-      region: us-east-1
+      region: us-west-1 
       filters:
         instance-state-name: running
-    register: ec2_info
+    register: ec2_info_one
     tags:
     - generate-files
-  
-  - name: debug ec2_info output
-    debug: msg="{{ item.id }} {{ item.public_dns_name }}"
-    with_items: "{{ ec2_info.instances }}"
+
+  - name: gather facts from us-west-2
+    ec2_remote_facts: 
+      region: us-west-2 
+      filters:
+        instance-state-name: running
+    register: ec2_info_two
+    tags:
+    - generate-files
+
+#  - name: debug ec2_info output
+#    debug: msg="{{ item.id }} {{ item.public_dns_name }}"
+#    with_items: "{{ ec2_info_one.instances }}"
+#    tags:
+#    - generate-files
+#    when: debug is defined
+
+#  - name: debug ec2_info output
+#    debug: msg="{{ item.id }} {{ item.public_dns_name }}"
+#    with_items: "{{ ec2_info_one.instances }}"
+#    tags:
+#    - generate-files
+#    when: debug is defined
+
+  - name: debug ec2_info_one output
+    debug: msg="{{ ec2_info_one.instances|pprint }}"
+    tags:
+    - generate-files
+    when: debug is defined
+
+  - name: debug ec2_info_one output
+    debug: msg="{{ ec2_info_one.instances|pprint }}"
+    tags:
+    - generate-files
     when: debug is defined
 
   - name: write the inventory file
-    template: src="./inv.j2" dest="{{ playbook_dir }}/{{ repset_name }}.inv"
+    template: src="./inv.j2" dest="{{ playbook_dir }}/mongo.inv"
     tags:
     - generate-files
 
@@ -40,7 +118,38 @@
     tags:
     - generate-files
 
+  - name: set fact for ec2_instances to info_one
+    set_fact: ec2_instances="{{ ec2_info_one.instances }}"
+    tags:
+    - generate-files
+
+  - name: set repset name to west1 
+    set_fact: repset_name=west1
+    tags:
+    - generate-files
+
+  - name: debug ec2_instances
+    debug: msg="{{ ec2_instances|pprint }}"
+    tags:
+    - generate-files
+
   - name: write group vars for mongo repset group
-    template: src="./group_vars.j2" dest="{{ playbook_dir }}/group_vars/{{ repset_name }}"
+    template: src="./group_vars.j2" dest="{{ playbook_dir }}/group_vars/west1"
+    tags:
+    - generate-files
+
+  - name: set fact for ec2_instances to info_two
+    set_fact: ec2_instances="{{ ec2_info_two.instances }}"
+    tags:
+    - generate-files
+
+  - name: set repset name to west2
+    set_fact: repset_name=west2
+    tags:
+    - generate-files
+  
+
+  - name: write group vars for mongo repset group
+    template: src="./group_vars.j2" dest="{{ playbook_dir }}/group_vars/west2"
     tags:
     - generate-files

@@ -5,17 +5,30 @@
 mongod_link_to: /mnt/data/mongodb
 mongod_datadir_prefix: /var/lib/mongodb
 mongod_replication: true
-mongod_repl_master: {{ ec2_info.instances[0].public_dns_name }} 
+{% for item in ec2_instances %}
+{% if loop.index == 1 %}
+mongod_repl_master: {{ item.public_dns_name }} 
+{% endif %}
+{% endfor %}
 mongod_replset_name: {{ repset_name }} 
 mongod_repl_servers: 
-{% for item in ec2_info.instances %}
+{% for item in ec2_instances %}
   "{{ item.public_dns_name }}": {{ item[name_key] }}
 {% endfor %}
 mongod_config_servers: 
-{% for item in ec2_info.instances %}
-  - {{ item[name_key] }}:27019
+{% for item in ec2_info_one.instances %}
+{% if loop.index == 1 %}
+  - {{ item[name_key] }}:27018
+{% endif %}
+{% endfor %}
+{% for item in ec2_info_two.instances %}
+{% if loop.index == 1 %}
+  - {{ item[name_key] }}:27018
+{% endif %}
 {% endfor %}
 mongos_servers:
-{% for item in ec2_info.instances %}
-  "{{ item.public_dns_name}}": {{ item[name_key] }}
+{% for item in ec2_info_one.instances %}
+{% if loop.index == 1 %}
+  - {{ item[name_key] }}:27019
+{% endif %}
 {% endfor %}

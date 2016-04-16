@@ -1,19 +1,13 @@
 - hosts: "{{ target|default('localhost') }}"
   tasks:
-  - name: delete 3 instances
+  - name: delete 6 instances
     ec2:
       state: absent
       instance_ids:
-{% for item in ec2_info.instances %}
+{% for item in ec2_info_one.instances %}
       - {{ item.id }}
 {% endfor %}
-      key_name: ec2_mongo
-      region: us-east-1
-      vpc_subnet_id: subnet-bfc7afc9
-      instance_type: m1.small
-      image: ami-ad888ec4
-      wait: yes
-      group: mongo
-      count: 3
-      assign_public_ip: yes
+{% for item in ec2_info_two.instances %}
+      - {{ item.id }}
+{% endfor %}
 

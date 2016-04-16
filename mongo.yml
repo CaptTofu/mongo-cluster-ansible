@@ -1,6 +1,6 @@
 ---
 
-- hosts: "{{ target|default('mongo-rs1') }}" 
+- hosts: "{{ target|default('mongo-cluster') }}" 
   become: yes
   roles:
   - role: mongodb-sharded-cluster
