@@ -1,12 +1,21 @@
 - hosts: "{{ target|default('localhost') }}"
   tasks:
-  - name: delete 6 instances
+  - name: delete 3 instances
     ec2:
       state: absent
+      region: us-west-1
       instance_ids:
 {% for item in ec2_info_one.instances %}
       - {{ item.id }}
 {% endfor %}
+
+- hosts: "{{ target|default('localhost') }}"
+  tasks:
+  - name: delete 3 instances
+    ec2:
+      state: absent
+      region: us-west-2
+      instance_ids:
 {% for item in ec2_info_two.instances %}
       - {{ item.id }}
 {% endfor %}
